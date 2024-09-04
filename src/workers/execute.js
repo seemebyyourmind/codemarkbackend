@@ -9,8 +9,8 @@ const ProblemService=require("../services/admin/ProblemService")
 const AdminService=require('../services/AdminService')
 
 let /** @type LanguageContainer */ dockerContainer;
-let /** @type Array<String> */ inps;
-let /** @type Array<String> */ outs;
+let /** @type Array<String> */ inps=[];
+let /** @type Array<String> */ outs=[];
 
 const EXECUTE_CODE_STATUS = {
   AC: "AC",

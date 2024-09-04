@@ -1,4 +1,5 @@
 const db = require("../../config/connectDb");
+const bcrypt = require('bcrypt');
 
 const getNumberUsersByRole = (role) => {
   return new Promise((resolve, reject) => {
@@ -199,8 +200,120 @@ const getUsersByRole = (page, role, search) => {
   //     });
   //   });
   // };
+  const deleteUser = (userId) => {
+    return new Promise((resolve, reject) => {
+      db.query("DELETE FROM user WHERE user_id = ?", [userId], (err, result) => {
+        if (err) {
+          reject("Xóa người dùng thất bại");
+        } else {
+          if (result.affectedRows === 0) {
+            reject("Không tìm thấy người dùng để xóa");
+          } else {
+            resolve("Xóa người dùng thành công");
+          }
+        }
+      });
+    });
+  };
+  const setUserPassword = (userId, newPassword) => {
+    const bcrypt = require('bcrypt');
+    return new Promise((resolve, reject) => {
+      // Kiểm tra userId và newPassword
+      if (!userId || !newPassword) {
+        reject("UserId hoặc mật khẩu mới không hợp lệ");
+        return;
+      }
+
+      // Mã hóa mật khẩu trước khi lưu vào cơ sở dữ liệu
+      const saltRounds = 10;
+      console.log("UserId:", userId, "NewPassword:", newPassword);
+      
+      bcrypt.hash(newPassword.toString(), saltRounds, (err, hashedPassword) => {
+        if (err) {
+          console.error("Lỗi khi mã hóa mật khẩu:", err);
+          reject("Lỗi khi mã hóa mật khẩu");
+          return;
+        }
+        
+        // Cập nhật mật khẩu trong cơ sở dữ liệu
+        db.query(
+          "UPDATE user SET password = ? WHERE user_id = ?",
+          [hashedPassword, userId],
+          (err, result) => {
+            if (err) {
+              console.error("Lỗi khi cập nhật mật khẩu:", err);
+              reject("Đặt mật khẩu thất bại");
+            } else {
+              if (result.affectedRows === 0) {
+                reject("Không tìm thấy người dùng để cập nhật mật khẩu");
+              } else {
+                resolve("Đặt mật khẩu thành công");
+              }
+            }
+          }
+        );
+      });
+    });
+  };
+  const deleteUserFromGroup = (userId, groupId) => {
+    return new Promise((resolve, reject) => {
+      db.query(
+        "DELETE FROM user_group WHERE user_id = ? AND group_id = ?",
+        [userId, groupId],
+        (err, result) => {
+          if (err) {
+            reject("Xóa người dùng khỏi nhóm thất bại");
+          } else {
+            if (result.affectedRows === 0) {
+              reject("Không tìm thấy bản ghi để xóa");
+            } else {
+              resolve("Xóa người dùng khỏi nhóm thành công");
+            }
+          }
+        }
+      );
+    });
+  };
+  const getUserSubmits = (userId, page) => {
+    return new Promise((resolve, reject) => {
+      const limit = 15;
+      const offset = (page - 1) * limit;
+      
+      const query = `
+        SELECT user_id, problem_id, source, status, numberTestcasePass, numberTestcase, 
+               points, error, language_id, timeExecute, memoryUsage, submit_id
+        FROM submit
+        WHERE user_id = ?
+        ORDER BY problem_id
+        LIMIT ? OFFSET ?
+      `;
+      
+      const countQuery = `
+        SELECT COUNT(*) AS total
+        FROM submit
+        WHERE user_id = ?
+      `;
+      
+      db.query(query, [userId, limit, offset], (err, results) => {
+        if (err) {
+          reject("Lấy danh sách submit thất bại");
+        } else {
+          db.query(countQuery, [userId], (countErr, countResults) => {
+            if (countErr) {
+              reject("Lấy tổng số bản ghi thất bại");
+            } else {
+              resolve({
+                submits: results,
+                total: countResults[0].total
+              });
+            }
+          });
+        }
+      });
+    });
+  };
 
 
 
 
-  module.exports ={getUserInfo,getUserGroup,getUsersByGroup,getUsersByRole,getAllGroup,getAllRole,getNumberUserByGroup,getNumberUsersByRole,getNumberUser,getNumberGroup}
+  module.exports ={getUserSubmits,deleteUserFromGroup,setUserPassword,deleteUser,getUserInfo,getUserGroup,getUsersByGroup,getUsersByRole,getAllGroup,getAllRole,getNumberUserByGroup,getNumberUsersByRole,getNumberUser,getNumberGroup}

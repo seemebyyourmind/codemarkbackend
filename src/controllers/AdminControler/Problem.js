@@ -22,8 +22,7 @@ const getSearchProblem = async (req, res) => {
       }
     };
 
-
-  const getProblemInfo = async (req, res) => {
+ const getProblemInfo = async (req, res) => {
         try {
          
           
@@ -40,9 +39,8 @@ const getSearchProblem = async (req, res) => {
           
           return res.status(404).json({e});
           }
-        };
-
-  const DeleteTestCase = async (req, res) => {
+};
+const DeleteTestCase = async (req, res) => {
           try {
            
             
@@ -57,10 +55,10 @@ const getSearchProblem = async (req, res) => {
             
             return res.status(404).json({e});
             }
-    };
+   };
 
 
-          const UpdateTestCase = async (req, res) => {
+const UpdateTestCase = async (req, res) => {
             try {
              
               
@@ -76,15 +74,10 @@ const getSearchProblem = async (req, res) => {
               
               return res.status(404).json({e});
               }
-            };
-     const CreateTestCase = async (req, res) => {
+};
+const CreateTestCase = async (req, res) => {
         try {
-               
-                
-          
-            
-              
-                
+                    
          const testcase_id= await ProblemService.CreateTestCase(req.body.problem_id,req.body.input,req.body.output);
                 //Tạo tài khoản
                 return res.status(200).json({testcase_id});
@@ -92,10 +85,53 @@ const getSearchProblem = async (req, res) => {
                 
                 return res.status(404).json({e});
                 }
-              };
+ };
+
+const deleteProblem = async (req, res) => {
+  try {
+    const problem_id = req.query.id;
+    const result = await ProblemService.deleteProblem(problem_id);
+    return res.status(200).json({ message: result });
+  } catch (e) {
+    return res.status(400).json({ error: e });
+  }
+};
+
+const updateProblemInfo = async (req, res) => {
+  try {
+    const { problem_id, title, description, difficulty } = req.body;
+    const result = await ProblemService.updateProblemInfo(problem_id, title, description, difficulty);
+    return res.status(200).json({ message: result });
+  } catch (e) {
+    return res.status(400).json({ error: e });
+  }
+};
+
+const updateProblemDetail = async (req, res) => {
+  try {
+    const { problem_id, language_id, source_code, time_ex, memory } = req.body;
+    const result = await ProblemService.updateProblemDetail(problem_id, language_id, source_code, time_ex, memory);
+    return res.status(200).json({ message: result });
+  } catch (e) {
+    return res.status(400).json({ error: e });
+  }
+};
+const getSubmitsByProblemId = async (req, res) => {
+  try {
+    const problem_id = req.query.id;
+    const page = req.query.page || 1;
+    const submits = await ProblemService.getSubmitsByProblemId(problem_id, page);
+    return res.status(200).json({ submits });
+  } catch (e) {
+    return res.status(400).json({ error: e });
+  }
+};
+
+
+          
               
       
 
 
 
-module.exports={getSearchProblem,getProblemInfo,UpdateTestCase,DeleteTestCase,CreateTestCase}
+module.exports={getSubmitsByProblemId,updateProblemDetail,updateProblemInfo,deleteProblem,getSearchProblem,getProblemInfo,UpdateTestCase,DeleteTestCase,CreateTestCase}

@@ -41,24 +41,37 @@ exports.runWithStoreData = async (req, res) => {
   jobData.problemId = req.body.problemId;
   jobData.isStore = true;
   jobData.handleRunFinishCallback = async function (runInfo) {
+    console.log(runInfo)
     try {
       let info = {
         ownerId: req.userId,
         problemId: jobData.problemId,
         source: jobData.source,
-        status: runInfo.data.runInfo[0].status ?? "CE",
         language: jobData.languageType,
-        numberTestcasePass: runInfo.data.runInfo[0].numberOfPass,
-        numberTestcase: runInfo.data.runInfo[0].numberOfTestCase,
-        timeExecute: runInfo.data.runInfo[0].timeExecute,
-        memoryUsage: runInfo.data.runInfo[0].totalUsageMemory,
-        error: runInfo.data.status !== false ? undefined : runInfo.data.runInfo,
       };
-      // let createdSubmission = await Submission.create(info);
+
+      if (runInfo.data.status === false) {
+        info.status = "CE";
+        info.error = runInfo.data.runInfo;
+        info.score = 0;
+      } else {
+        const testCases = runInfo.data.runInfo;
+        const totalTestCases = testCases.length;
+        const passedTestCases = testCases.filter(test => test.status === "AC").length;
+        
+        info.status = passedTestCases === totalTestCases ? "AC" : "WA";
+        info.score = passedTestCases / totalTestCases;
+        info.numberTestcasePass = passedTestCases;
+        info.numberTestcase = totalTestCases;
+        info.timeExecute = testCases.reduce((max, test) => Math.max(max, test.timeExecute || 0), 0);
+        info.memoryUsage = testCases.reduce((max, test) => Math.max(max, test.totalUsageMemory || 0), 0);
+      }
+
+      // // let createdSubmission = await Submission.create(info);
      
       res.status(200).send({
         runningInfo: runInfo,
-        //  Info: info,
+         Info: info,
       });
     } catch (error) {
       res.status(500).send({

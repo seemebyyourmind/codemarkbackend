@@ -125,9 +125,48 @@ const getUserSubmit=async(req,res)=>{
   }
 
 }
+const deleteUser = async (req, res) => {
+  try {
+    const userId = req.query.id;
+    const result = await UserService.deleteUser(userId);
+    return res.status(200).json({ message: result });
+  } catch (e) {
+    return res.status(400).json({ error: e });
+  }
+};
+const setUserPassword = async (req, res) => {
+  try {
+    const userId = req.body.user_id;
+    const newPassword = req.body.new_password;
+    const result = await UserService.setUserPassword(userId, newPassword);
+    return res.status(200).json({ message: result });
+  } catch (e) {
+    return res.status(400).json({ error: e });
+  }
+};
+const deleteUserFromGroup = async (req, res) => {
+  try {
+    const userId = req.body.user_id;
+    const groupId = req.body.group_id;
+    const result = await UserService.deleteUserFromGroup(userId, groupId);
+    return res.status(200).json({ message: result });
+  } catch (e) {
+    return res.status(400).json({ error: e });
+  }
+};
+const getUserSubmits = async (req, res) => {
+  try {
+    const userId = req.query.id;
+    const page = parseInt(req.query.page) || 1;
+    const submits = await UserService.getUserSubmits(userId, page);
+    return res.status(200).json({ submits });
+  } catch (e) {
+    return res.status(400).json({ error: e });
+  }
+};
 
 
 
-module.exports = {
+module.exports = {getUserSubmits,deleteUserFromGroup,setUserPassword,deleteUser,
  getUserByGroup,getUserByRole,getGroup,getRole,searchUser,getUsersInfo,getUserInfo,getUserGroup,getUserSubmit
 };

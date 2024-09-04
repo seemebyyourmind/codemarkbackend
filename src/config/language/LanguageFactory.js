@@ -2,6 +2,7 @@ const BaseLanguage = require('./_base');
 const { CPPLanguage } = require('./CPP');
 const { GOLanguage } = require('./GO');
 const { JavaLanguage } = require('./JAVA');
+const {PythonLanguage}=require('./PYTHON')
 
 class Language extends BaseLanguage {
 }
@@ -9,7 +10,8 @@ class Language extends BaseLanguage {
 Language.SUPPORTED = {
   CPP: 'cpp',
   GO: 'golang',
-  JAVA : 'java'
+  JAVA : 'java',
+  PYTHON:'python'
 };
 
 Language.create = function (type, runningPath) {
@@ -22,7 +24,8 @@ Language.create = function (type, runningPath) {
 
     case Language.SUPPORTED.JAVA:
       return new  JavaLanguage(runningPath);
-
+    case Language.SUPPORTED.PYTHON:
+        return new PythonLanguage(runningPath);
     default:
       return null;
   }
@@ -38,7 +41,8 @@ Language.getFileName = function(type) {
 
     case Language.SUPPORTED.JAVA:
       return "A.java";
-
+    case Language.SUPPORTED.PYTHON:
+        return "A.py";
     default:
       return null;
   }
