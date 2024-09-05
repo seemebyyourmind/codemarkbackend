@@ -56,8 +56,34 @@ const getSubmitsByUserAndProblem = async (req, res) => {
     return res.status(404).json({ error: e });
   }
 };
+// Lấy danh sách submit theo user_id
+const getSubmitsByUserId = async (req, res) => {
+  try {
+    const { user_id } = req.query;
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 15;
+    const submits = await SubmitService.getSubmitsByUserId(user_id, page, limit);
+    return res.status(200).json(submits);
+  } catch (e) {
+    return res.status(404).json({ error: e });
+  }
+};
 
-module.exports = {
+// Lấy danh sách submit theo problem_id
+const getSubmitsByProblemId = async (req, res) => {
+  try {
+    const { problem_id } = req.query;
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 15;
+    const submits = await SubmitService.getSubmitsByProblemId(problem_id, page, limit);
+    return res.status(200).json(submits);
+  } catch (e) {
+    return res.status(404).json({ error: e });
+  }
+};
+
+
+module.exports = {getSubmitsByUserId,getSubmitsByProblemId,
   createSubmit,
   updateSubmitResult,
   deleteSubmit,

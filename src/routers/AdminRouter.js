@@ -45,24 +45,36 @@ router.get("/problem/submits", Problem.getSubmitsByProblemId); // lấy danh sá
 
 
 // Submit routes
-router.post("/submit/create", Submit.createSubmit); // user_id, problem_id, source, language_id
-router.put("/submit/updateresult", Submit.updateSubmitResult); // submit_id, status, numberTestcasePass, numberTestcase, points, error, timeExecute, memoryUsage
 router.delete("/submit/delete", Submit.deleteSubmit); // submit_id
 router.get("/submit/getbyid", Submit.getSubmitById); // submit_id
+router.post("/submit/create", Submit.createSubmit); // user_id, problem_id, source, language_id
+router.put("/submit/updateresult", Submit.updateSubmitResult); // submit_id, status, numberTestcasePass, numberTestcase, points, error, timeExecute, memoryUsage
+
 router.get("/submit/getbyuserandproblem", Submit.getSubmitsByUserAndProblem); // user_id, problem_id, page, limit
+router.get("/submit/getbyuserid", Submit.getSubmitsByUserId); // user_id, page, limit
+router.get("/submit/getbyproblemid", Submit.getSubmitsByProblemId); // problem_id, page, limit
 
 
 // Group routes
-router.get("/group/getgroups", Group.getGroups); // no params
-router.get("/group/getusersingroup", Group.getUsersInGroup); // group_id
-router.get("/group/getproblemsingroup", Group.getProblemsInGroup); // group_id
-router.post("/group/creategroup", Group.createGroup); // name, description
-router.put("/group/updategroup", Group.updateGroup); // group_id, name, description
-router.delete("/group/deletegroup", Group.deleteGroup); // group_id
-router.post("/group/addusertogroup", Group.addUserToGroup); // user_id, group_id
-router.delete("/group/removeuserfromgroup", Group.removeUserFromGroup); // user_id, group_id
+//test api
+router.get("/group/getgroups", Group.getGroups); // page (query)------done
+router.get("/group/getusersingroup", Group.getUsersInGroup); // group_id,page (query)------done
+router.get("/group/getproblemsingroup", Group.getProblemsInGroup); // group_id  page query-------done
+router.post("/group/creategroup", Group.createGroup); // name, description (body)----done
+router.put("/group/updategroup", Group.updateGroup); // group_id, name, description (body)--------done
+router.delete("/group/deletegroup", Group.deleteGroup); // group_id (body)--------done
+router.post("/group/addusertogroup", Group.addUserToGroup); // user_id, group_id (body)---------done
+router.delete("/group/removeuserfromgroup", Group.removeUserFromGroup); // user_id, group_id--------done
 router.post("/group/addproblemtogroup", Group.addProblemToGroup); // problem_id, group_id
 router.delete("/group/removeproblemfromgroup", Group.removeProblemFromGroup); // problem_id, group_id
+router.get("/group/getgroupinfo", Group.getGroupInfo); // id (query)
+router.get("/group/getuserswithgroupstatus", Group.getUsersWithGroupStatus); // id, page, search (query)
+router.get("/group/getproblemswithgroupstatus", Group.getProblemsWithGroupStatus); // id, page, search (query)
+
+
+//thêm router groupdetail
+//router listuser
+//router listprolem
 
 // router.post("/placeorder", CartController.placeOrder);
 module.exports = router;
