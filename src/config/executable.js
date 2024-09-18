@@ -150,13 +150,14 @@ class LanguageContainer {
                         await this.handleFinishCompile();
                         resolve(true);
                     } else {
-                        reject(stderrBuffer.replaceAll(this.language.baseFileName, "Source"));
+                        reject("Lỗi biên dịch: " + stderrBuffer.replaceAll(this.language.baseFileName, "Source"));
                     }
                     this.setIsNotExecuting();
                 })
             } catch (error) {
                 this.setIsNotExecuting()
                 reject('Đã xảy ra lỗi khi thực thi lệnh compile trong container:', error);
+                
             }
         })
     }

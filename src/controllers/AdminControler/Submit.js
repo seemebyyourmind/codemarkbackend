@@ -25,8 +25,8 @@ const updateSubmitResult = async (req, res) => {
 // Xóa submit
 const deleteSubmit = async (req, res) => {
   try {
-    const { submit_id } = req.body;
-    const result = await SubmitService.deleteSubmit(submit_id);
+    const { id } = req.body;
+    const result = await SubmitService.deleteSubmit(id);
     return res.status(200).json({ result });
   } catch (e) {
     return res.status(404).json({ error: e });
@@ -36,8 +36,8 @@ const deleteSubmit = async (req, res) => {
 // Lấy thông tin submit theo ID
 const getSubmitById = async (req, res) => {
   try {
-    const { submit_id } = req.query;
-    const submit = await SubmitService.getSubmitById(submit_id);
+    const { id } = req.query;
+    const submit = await SubmitService.getSubmitById(id);
     return res.status(200).json({ submit });
   } catch (e) {
     return res.status(404).json({ error: e });
@@ -59,7 +59,7 @@ const getSubmitsByUserAndProblem = async (req, res) => {
 // Lấy danh sách submit theo user_id
 const getSubmitsByUserId = async (req, res) => {
   try {
-    const { user_id } = req.query;
+    const  user_id  = req.query.id;
     const page = parseInt(req.query.page, 10) || 1;
     const limit = parseInt(req.query.limit, 10) || 15;
     const submits = await SubmitService.getSubmitsByUserId(user_id, page, limit);
@@ -72,7 +72,7 @@ const getSubmitsByUserId = async (req, res) => {
 // Lấy danh sách submit theo problem_id
 const getSubmitsByProblemId = async (req, res) => {
   try {
-    const { problem_id } = req.query;
+    const  problem_id  = req.query.id;
     const page = parseInt(req.query.page, 10) || 1;
     const limit = parseInt(req.query.limit, 10) || 15;
     const submits = await SubmitService.getSubmitsByProblemId(problem_id, page, limit);
@@ -82,8 +82,20 @@ const getSubmitsByProblemId = async (req, res) => {
   }
 };
 
+// Lấy danh sách submit có phân trang
+const getSubmitsWithPagination = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 15;
+    const sortBy = req.query.sort || 'submit_id';
+    const submits = await SubmitService.getSubmitsWithPagination(page, limit, sortBy);
+    return res.status(200).json(submits);
+  } catch (e) {
+    return res.status(500).json({ error: `Lỗi khi lấy danh sách submit: ${e.message}` });
+  }
+};
 
-module.exports = {getSubmitsByUserId,getSubmitsByProblemId,
+module.exports = {getSubmitsWithPagination,getSubmitsByUserId,getSubmitsByProblemId,
   createSubmit,
   updateSubmitResult,
   deleteSubmit,

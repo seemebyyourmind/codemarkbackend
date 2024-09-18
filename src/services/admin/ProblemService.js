@@ -10,7 +10,6 @@ const getSearchProblem = (page, difficulty, search) => {
 
     let query = `
       SELECT 
-      SQL_CALC_FOUND_ROWS
       p.problem_id, 
       p.title, 
       p.description,
@@ -27,21 +26,33 @@ const getSearchProblem = (page, difficulty, search) => {
       1 = 1
     `;
 
+    let countQuery = `
+      SELECT COUNT(DISTINCT p.problem_id) AS total_count
+      FROM problems p
+      LEFT JOIN problem_group pg ON p.problem_id = pg.problem_id
+      LEFT JOIN groups g ON pg.group_id = g.group_id
+      WHERE 1 = 1
+    `;
+
     let queryParams = [];
     if (difficulty !== 'all') {
       query += ` AND p.difficulty = ?`;
+      countQuery += ` AND p.difficulty = ?`;
       queryParams.push(difficulty);
     } 
 
     if (search) {
       query += ` AND (p.title LIKE ? OR p.description LIKE ?)`;
+      countQuery += ` AND (p.title LIKE ? OR p.description LIKE ?)`;
       queryParams.push(`%${search}%`, `%${search}%`);
     }
 
     query += ` GROUP BY p.problem_id, p.title, p.description, p.difficulty, p.created LIMIT ? OFFSET ?`;
     queryParams.push(limit, offset);
+
     console.log(query);
-    console.log(queryParams)
+    console.log(queryParams);
+
     db.query(query, queryParams, (err, results) => {
       if (err) {
         reject("Không thể truy xuất bài toán");
@@ -49,8 +60,8 @@ const getSearchProblem = (page, difficulty, search) => {
       }
 
       // Lấy tổng số bản ghi
-      db.query('SELECT FOUND_ROWS() AS total_count', (err, countResults) => {
-        if (err) {
+      db.query(countQuery, queryParams.slice(0, -2), (countErr, countResults) => {
+        if (countErr) {
           reject("Không thể lấy tổng số bản ghi");
         } else {
           resolve({
@@ -110,19 +121,66 @@ const getProblemTestCase=(id)=>{
 
 //tạo problem 
 
-const CreateProblem=(title,description,difficulty)=>{
+const CreateProblem = (title, description, difficulty, testcases, problemDetails) => {
   return new Promise((resolve, reject) => {
-   
-    db.query(`INSERT INTO problems (title, description, difficulty)
-VALUES (?, ?, ? );`, [title,description,difficulty],(err, results) => {
+    db.beginTransaction((err) => {
       if (err) {
-        reject("fail get resource");
-      } else {
-        resolve(results);
+        return reject("Không thể bắt đầu giao dịch");
       }
+
+      db.query(
+        `INSERT INTO problems (title, description, difficulty) VALUES (?, ?, ?)`,
+        [title, description, difficulty],
+        (err, result) => {
+          if (err) {
+            return db.rollback(() => {
+              reject("Không thể tạo bài toán");
+            });
+          }
+
+          const problemId = result.insertId;
+
+          // Thêm test cases
+          const testcaseValues = testcases.map(tc => [problemId, tc.input, tc.output]);
+          db.query(
+            `INSERT INTO testcase (problem_id, input, output) VALUES ?`,
+            [testcaseValues],
+            (err) => {
+              if (err) {
+                return db.rollback(() => {
+                  reject("Không thể thêm test cases");
+                });
+              }
+
+              // Thêm problem details
+              const detailValues = problemDetails.map(pd => [problemId, pd.language_id, pd.source_code, pd.time_ex, pd.memory]);
+              db.query(
+                `INSERT INTO problem_detail (problem_id, language_id, source_code, time_ex, memory) VALUES ?`,
+                [detailValues],
+                (err) => {
+                  if (err) {
+                    return db.rollback(() => {
+                      reject("Không thể thêm chi tiết bài toán");
+                    });
+                  }
+
+                  db.commit((err) => {
+                    if (err) {
+                      return db.rollback(() => {
+                        reject("Không thể hoàn tất giao dịch");
+                      });
+                    }
+                    resolve({ problemId: problemId, message: "Tạo bài toán thành công" });
+                  });
+                }
+              );
+            }
+          );
+        }
+      );
     });
   });
-}
+};
 const CreateTestCase=(id,input,output)=>{
   return new Promise((resolve, reject) => {
    
@@ -252,7 +310,7 @@ const DeleteTestCase = (testcase_id) => {
       const offset = (page - 1) * itemsPerPage;
       
       const query = `
-        SELECT SQL_CALC_FOUND_ROWS s.submit_id, s.user_id, s.problem_id, s.language_id, s.source, 
+        SELECT s.submit_id, s.user_id, s.problem_id, s.language_id, s.source, 
                s.status, s.numberTestcasePass, s.numberTestcase, s.points, s.error, 
                s.timeExecute, s.memoryUsage, u.username
         FROM submit s
@@ -262,12 +320,18 @@ const DeleteTestCase = (testcase_id) => {
         LIMIT ? OFFSET ?
       `;
       
+      const countQuery = `
+        SELECT COUNT(*) as total
+        FROM submit s
+        WHERE s.problem_id = ?
+      `;
+      
       db.query(query, [problem_id, itemsPerPage, offset], (err, results) => {
         if (err) {
           reject("Lấy danh sách submit thất bại");
         } else {
-          db.query('SELECT FOUND_ROWS() as total', (err, countResult) => {
-            if (err) {
+          db.query(countQuery, [problem_id], (countErr, countResult) => {
+            if (countErr) {
               reject("Lấy tổng số bản ghi thất bại");
             } else {
               const totalRecords = countResult[0].total;
@@ -284,9 +348,28 @@ const DeleteTestCase = (testcase_id) => {
     });
   };
 
+  // Lấy thông tin ngôn ngữ lập trình từ bảng languages
+  const getLanguages = () => {
+    return new Promise((resolve, reject) => {
+      const query = `
+        SELECT language_id, name
+        FROM languages
+        ORDER BY name ASC
+      `;
+      
+      db.query(query, (err, results) => {
+        if (err) {
+          console.error("Lỗi khi lấy thông tin ngôn ngữ:", err);
+          reject("Không thể lấy thông tin ngôn ngữ lập trình");
+        } else {
+          resolve(results);
+        }
+      });
+    });
+  };
 
 
 
-  module.exports={getSubmitsByProblemId,updateProblemDetail,updateProblemInfo, deleteProblem,
+  module.exports={getLanguages,getSubmitsByProblemId,updateProblemDetail,updateProblemInfo, deleteProblem,
     getProblemDetail, getSearchProblem,getProblemInfo,getProblemTestCase,CreateTestCase,CreateProblem,CreateProblemDetail,UpdateTestCase,DeleteTestCase
   }

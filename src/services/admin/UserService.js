@@ -44,7 +44,85 @@ const getUsersByGroup = (page,group) => {
     });
   });
 };
+
 const getUsersByRole = (page, role, search) => {
+  return new Promise((resolve, reject) => {
+    const limit = 15;
+    const offset = (page - 1) * limit;
+
+    let query = `
+      SELECT 
+        u.user_id, 
+        u.username, 
+        u.email, 
+        u.phone, 
+        u.role_id,
+        r.name AS role_name,
+        GROUP_CONCAT(g.name SEPARATOR ', ') AS groups
+      FROM 
+        user u
+      JOIN 
+        roles r ON u.role_id = r.role_id
+      LEFT JOIN 
+        user_group ug ON u.user_id = ug.user_id
+      LEFT JOIN 
+        groups g ON ug.group_id = g.group_id
+      WHERE 
+        1 = 1
+    `;
+
+    let countQuery = `
+      SELECT COUNT(DISTINCT u.user_id) AS total_count
+      FROM user u
+      JOIN roles r ON u.role_id = r.role_id
+      LEFT JOIN user_group ug ON u.user_id = ug.user_id
+      LEFT JOIN groups g ON ug.group_id = g.group_id
+      WHERE 1 = 1
+    `;
+
+    let queryParams = [];
+    if (role && role !== 'all') {
+      query += ` AND u.role_id = ?`;
+      countQuery += ` AND u.role_id = ?`;
+      queryParams.push(role);
+    }
+
+    if (search && search.trim() !== "") {
+      query += ` AND (u.username LIKE ? OR u.phone LIKE ? OR u.email LIKE ?)`;
+      countQuery += ` AND (u.username LIKE ? OR u.phone LIKE ? OR u.email LIKE ?)`;
+      queryParams.push(`%${search}%`, `%${search}%`, `%${search}%`);
+    }
+
+    query += ` GROUP BY u.user_id
+      LIMIT ? OFFSET ?`;
+    queryParams.push(limit, offset);
+
+    db.query(query, queryParams, (err, results) => {
+      if (err) {
+        console.error("Lỗi khi truy vấn cơ sở dữ liệu:", err);
+        reject("Không thể lấy danh sách người dùng");
+      } else {
+        db.query(countQuery, queryParams.slice(0, -2), (countErr, countResults) => {
+          if (countErr) {
+            console.error("Lỗi khi đếm tổng số người dùng:", countErr);
+            reject("Không thể đếm tổng số người dùng");
+          } else {
+            const totalUsers = countResults[0].total_count;
+            const totalPages = Math.ceil(totalUsers / limit);
+            resolve({
+              users: results,
+              currentPage: page,
+              totalPages: totalPages,
+              totalUsers: totalUsers
+            });
+          }
+        });
+      }
+    });
+  });
+};
+
+const getUsersByRole2 = (page, role, search) => {
   return new Promise((resolve, reject) => {
     const limit = 15;
     const offset = (page - 1) * limit;
@@ -56,6 +134,7 @@ const getUsersByRole = (page, role, search) => {
         u.username, 
         u.email, 
         u.phone, 
+        u.role_id,
         r.name AS role_name,
         GROUP_CONCAT(g.name SEPARATOR ', ') AS groups
       FROM 
@@ -71,12 +150,12 @@ const getUsersByRole = (page, role, search) => {
     `;
 
     let queryParams = [];
-    if (role !== 'all') {
+    if (role && role !== 'all') {
       query += ` AND u.role_id = ?`;
       queryParams.push(role);
     } 
 
-    if (search) {
+    if (search && search!=="") {
       query += ` AND (u.username LIKE ? OR u.phone LIKE ? OR u.email LIKE ?)`;
       queryParams.push(`%${search}%`, `%${search}%`, `%${search}%`);
     }
@@ -85,24 +164,34 @@ const getUsersByRole = (page, role, search) => {
         u.user_id, u.username, u.email, u.phone, r.name
       LIMIT ? OFFSET ?`;
     queryParams.push(limit, offset);
-    console.log(query);
+
+   
+
     db.query(query, queryParams, (err, results) => {
       if (err) {
-        reject("Failed to retrieve users with groups");
-        return;
-      }
+        
+        reject("Không thể lấy danh sách người dùng");
+      } else {
+        const countQuery = 'SELECT FOUND_ROWS() AS total_count';
+      
 
-      // Retrieve the total count of records
-      db.query('SELECT FOUND_ROWS() AS total_count', (err, countResults) => {
-        if (err) {
-          reject("Failed to retrieve total count");
-        } else {
-          resolve({
-            users: results,
-            total_count: countResults[0].total_count
-          });
-        }
-      });
+        db.query(countQuery, (countErr, countResults) => {
+          if (countErr) {
+            console.error("Lỗi khi đếm tổng số người dùng:", countErr);
+            reject("Không thể đếm tổng số người dùng");
+          } else {
+            const totalUsers = countResults[0].total_count;
+            const totalPages = Math.ceil(totalUsers / limit);
+            console.log('resule',page,totalPages,totalUsers);
+            resolve({
+              users: results,
+              currentPage: page,
+              totalPages: totalPages,
+              totalUsers: totalUsers
+            });
+          }
+        });
+      }
     });
   });
 };
@@ -281,7 +370,7 @@ const getUsersByRole = (page, role, search) => {
       
       const query = `
         SELECT user_id, problem_id, source, status, numberTestcasePass, numberTestcase, 
-               points, error, language_id, timeExecute, memoryUsage, submit_id
+               points, error, language_id, timeExecute, memoryUsage, submit_id,submit_date
         FROM submit
         WHERE user_id = ?
         ORDER BY problem_id
@@ -312,8 +401,25 @@ const getUsersByRole = (page, role, search) => {
       });
     });
   };
+  const updateRole = (userId, roleId) => {
+    return new Promise((resolve, reject) => {
+      const query = "UPDATE user SET role_id = ? WHERE user_id = ?";
+      db.query(query, [roleId, userId], (err, result) => {
+        if (err) {
+          console.error("Lỗi khi cập nhật vai trò:", err);
+          reject("Cập nhật vai trò thất bại");
+        } else {
+          if (result.affectedRows === 0) {
+            reject("Không tìm thấy người dùng để cập nhật vai trò");
+          } else {
+            resolve("Cập nhật vai trò thành công");
+          }
+        }
+      });
+    });
+  };
 
 
 
 
-  module.exports ={getUserSubmits,deleteUserFromGroup,setUserPassword,deleteUser,getUserInfo,getUserGroup,getUsersByGroup,getUsersByRole,getAllGroup,getAllRole,getNumberUserByGroup,getNumberUsersByRole,getNumberUser,getNumberGroup}
+  module.exports ={updateRole,getUserSubmits,deleteUserFromGroup,setUserPassword,deleteUser,getUserInfo,getUserGroup,getUsersByGroup,getUsersByRole,getAllGroup,getAllRole,getNumberUserByGroup,getNumberUsersByRole,getNumberUser,getNumberGroup}

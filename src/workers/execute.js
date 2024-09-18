@@ -4,9 +4,10 @@ const LanguageContainer = require('../config/executable');
 const { WorkerJob, WorkerSend, WorkerReponse } = require('./job');
 const { defaultMaxListeners } = require('events');
 
-const ProblemService=require("../services/admin/ProblemService")
+const ProblemService=require("../services/admin/ProblemService");
+const { info } = require('console');
 
-const AdminService=require('../services/AdminService')
+
 
 let /** @type LanguageContainer */ dockerContainer;
 let /** @type Array<String> */ inps=[];
@@ -152,12 +153,13 @@ async function runCodeWithSaving(data) {
   let response = createWorkerResponse(WorkerJob.TYPE.EXECUTING);
   try {
     
-
+    
     let startCompile = Date.now();
     console.log(startCompile);
     await dockerContainer.compile();
     await getTestCase(data.problemId);
     let listTestInfo = [];
+    let info={};
     if (inps.length === 0) {
       response.data = {
         status: false,
@@ -172,7 +174,6 @@ async function runCodeWithSaving(data) {
         // let runInfo = await dockerContainer.run(inps[index], outs[index]);
         let runInfo = await dockerContainer.run(inps[index],outs[index]);
 
-
         let runStatus = convertToStatus(runInfo);
         if (runStatus === EXECUTE_CODE_STATUS.CAN_CHECK_ANSWER) {
           if (checkOutput(runInfo.stdout, runInfo.output)) {
@@ -180,6 +181,29 @@ async function runCodeWithSaving(data) {
           } else {
             runStatus = EXECUTE_CODE_STATUS.WA;
           }
+        }else {
+          let errorString = "";
+          switch (runStatus) {
+            case EXECUTE_CODE_STATUS.TLE:
+              errorString = "Quá thời gian";
+              break;
+            case EXECUTE_CODE_STATUS.MLE:
+              errorString = "Quá bộ nhớ";
+              break;
+            case EXECUTE_CODE_STATUS.RE:
+              errorString = "Lỗi thực thi";
+              break;
+            default:
+              errorString = "Lỗi không xác định";
+          }
+          runInfo.errorString = errorString;
+          response.data = {
+            status: false,
+            runInfo: "xảy ra lỗi: "+errorString,
+            
+          };
+          parentPort.postMessage(response);
+          return;
         }
 
         runInfo.status = runStatus;
@@ -190,7 +214,7 @@ async function runCodeWithSaving(data) {
         await dockerContainer.handleFinishCompile(); // restart container to check memory
         if (runInfo.status !== EXECUTE_CODE_STATUS.AC) {
           break;
-        }
+        } //khi không khớp thoát luôn 
         await dockerContainer.handleFinishCompile(); // restart container to check memory
       } catch (error) {
         throw error;
@@ -216,6 +240,11 @@ async function runCodeWithSaving(data) {
         maxUsageMemory = Math.max(testCase.totalUsageMemory, maxUsageMemory);
         maxUsageTime = Math.max(testCase.timeExecute, maxUsageTime);
       }
+       info={status : EXECUTE_CODE_STATUS.AC,
+        numberTestcasePass : inps.length,
+        numberTestcase : inps.length,
+        timeExecute : maxUsageTime,
+        memoryUsage : maxUsageMemory,};
       listTestInfo = [];
       listTestInfo.push({
         status : EXECUTE_CODE_STATUS.AC,
@@ -227,17 +256,24 @@ async function runCodeWithSaving(data) {
     } else {
       // Chỉ lấy ra test case bị sai
       // listTestInfo.splice(0, listTestInfo.length - 1);
-      listTestInfo.push({
-        status : EXECUTE_CODE_STATUS.WC,
+       info={
         numberTestcasePass :numberTestcasePass,
         numberTestcase : inps.length,
+        hoang:"info info"}
+      // listTestInfo.push({
+      //   status : EXECUTE_CODE_STATUS.WC,
+      //   numberTestcasePass :numberTestcasePass,
+      //   numberTestcase : inps.length,
+      //   hoang:"listtest"
         
-      })
+      // })
     }
 
     response.data = {
       status: true,
-      runInfo: listTestInfo
+      runInfo: listTestInfo,
+      info:info
+     
     };
   } catch (error) {
     response.data = {
@@ -293,9 +329,10 @@ async function runCodeWithoutSaving(data) {
       runInfo: listTestInfo
     };
   } catch (error) {
+    console.log("loi tu compiler",error);
     response.data = {
       status: false,
-      runInfo: error
+      runInfo: error,
     };
   }
   parentPort.postMessage(response);
@@ -332,6 +369,7 @@ async function runCodeFromUser(data) {
       runInfo: listTestInfo
     };
   } catch (error) {
+   
     response.data = {
       status: false,
       runInfo: error

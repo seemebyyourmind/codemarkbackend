@@ -4,11 +4,10 @@ const getUserByRole = async (req, res) => {
   try {
    
     const page = parseInt(req.query.page, 10) || 1;
-    const role = req.query.role || 'all';
-    const search = req.query.search || '';
-  
-    
+    const role = req.query.role ||'all';
+    const search = req.query.search ||'';
 
+  
     const users = await UserService.getUsersByRole(page,role,search);
 
 
@@ -165,8 +164,18 @@ const getUserSubmits = async (req, res) => {
   }
 };
 
+const updateRole = async (req, res) => {
+  try {
+    const userId = req.body.user_id;
+    const roleId = req.body.role_id;
+    const result = await UserService.updateRole(userId, roleId);
+    return res.status(200).json({ message: result });
+  } catch (e) {
+    return res.status(400).json({ error: e });
+  }
+};
 
 
-module.exports = {getUserSubmits,deleteUserFromGroup,setUserPassword,deleteUser,
+module.exports = {updateRole,getUserSubmits,deleteUserFromGroup,setUserPassword,deleteUser,
  getUserByGroup,getUserByRole,getGroup,getRole,searchUser,getUsersInfo,getUserInfo,getUserGroup,getUserSubmit
 };

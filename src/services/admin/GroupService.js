@@ -90,7 +90,7 @@ const getProblemsInGroup = (groupId, page = 1, limit = 15) => {
   return new Promise((resolve, reject) => {
     const offset = (page - 1) * limit;
     const query = `
-      SELECT p.problem_id, p.description, p.difficulty, p.created
+      SELECT p.problem_id, p.title, p.difficulty, DATE_FORMAT(p.created, '%d-%m-%Y') as created
       FROM problem_group pg 
       LEFT JOIN problems p ON pg.problem_id = p.problem_id 
       WHERE pg.group_id = ?

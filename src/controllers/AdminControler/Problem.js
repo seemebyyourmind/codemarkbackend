@@ -63,11 +63,8 @@ const UpdateTestCase = async (req, res) => {
              
               
             //   const problems = await ProblemService.getSearchProblem(1,'all','h');
-          
-             
-    
-              
-              const Testcase= await ProblemService.UpdateTestCase(req.body.testcase_id,req.body.output,req.body.input);
+                  
+              const Testcase= await ProblemService.UpdateTestCase(req.body.testcase_id,req.body.input,req.body.output);
               //Tạo tài khoản
               return res.status(200).json({Testcase});
             } catch (e) {
@@ -126,12 +123,104 @@ const getSubmitsByProblemId = async (req, res) => {
     return res.status(400).json({ error: e });
   }
 };
+const getLanguages = async (req, res) => {
+  try {
+    const languages = await ProblemService.getLanguages();
+    return res.status(200).json({ languages });
+  } catch (e) {
+    return res.status(400).json({ error: "Không thể lấy danh sách ngôn ngữ lập trình", details: e });
+  }
+};
 
+
+const CreateProblem = async (req, res) => {
+  try {
+    const { title, description, difficulty, testcases, problemDetails } = req.body;
+    const result = await ProblemService.CreateProblem(title, description, difficulty, testcases, problemDetails);
+    return res.status(200).json({ message: "Tạo bài toán thành công", problem_id: result.problemId });
+  } catch (e) {
+    return res.status(400).json({ error: "Không thể tạo bài toán", details: e.message });
+  }
+};
+// Dữ liệu lỗi để test CreateProblem
+const testDataCreateProblemError = {
+  "title": "test loi", 
+  "description": "Mô tả bài toán test lỗi", 
+  "difficulty": "hard", 
+  "testcases": [
+    {
+      "input": "2 3",
+    "output": "5"
+    },
+    {
+      "input": "-1 5",
+       "output": "5"
+    }
+  ],
+  "problemDetails": [
+    {
+      "language_id": "không phải số", 
+      "source_code": "", 
+      "time_ex": -1, 
+      "memory": "128MB" 
+    },
+    {
+    
+    }
+  ]
+};
+
+// Dữ liệu lỗi để test updateProblemInfo
+const testDataUpdateProblemInfoError = {
+  "problem_id": "không phải số", // ID không hợp lệ
+  "title": 12345, // Tiêu đề không phải chuỗi
+  "description": null, // Mô tả không hợp lệ
+  "difficulty": [] // Độ khó không hợp lệ
+};
+
+// Dữ liệu lỗi để test updateProblemDetail
+const testDataUpdateProblemDetailError = {
+  "problem_id": -1, // ID không hợp lệ
+  "language_id": "javascript", // language_id không hợp lệ
+  "source_code": 12345, // Source code không phải chuỗi
+  "time_ex": "1 giây", // Thời gian thực thi không hợp lệ
+  "memory": true // Memory không hợp lệ
+};
+
+// JSON để test CreateProblem
+
+const testDataCreateProblem = {
+  "title": "Tổng hai số",
+  "description": "Viết chương trình tính tổng hai số nguyên",
+  "difficulty": "Dễ",
+  "testcases": [
+    {
+      "input": "2 3",
+      "output": "5"
+    },
+    {
+      "input": "-1 5",
+      "output": "4"
+    }
+  ],
+  "problemDetails": [
+    {
+      "language_id": 1,
+      "source_code": "def sum_two_numbers(a, b):\n    return a + b\n\na, b = map(int, input().split())\nprint(sum_two_numbers(a, b))",
+      "time_ex": 1,
+      "memory": 128
+    },
+    {
+      "language_id": 2,
+      "source_code": "#include <iostream>\nusing namespace std;\n\nint main() {\n    int a, b;\n    cin >> a >> b;\n    cout << a + b << endl;\n    return 0;\n}",
+      "time_ex": 1,
+      "memory": 256
+    }
+  ]
+};
 
           
               
-      
 
 
-
-module.exports={getSubmitsByProblemId,updateProblemDetail,updateProblemInfo,deleteProblem,getSearchProblem,getProblemInfo,UpdateTestCase,DeleteTestCase,CreateTestCase}
+module.exports={getLanguages,CreateProblem,getSubmitsByProblemId,updateProblemDetail,updateProblemInfo,deleteProblem,getSearchProblem,getProblemInfo,UpdateTestCase,DeleteTestCase,CreateTestCase}
