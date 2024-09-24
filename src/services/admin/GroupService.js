@@ -4,7 +4,8 @@ const db = require("../../config/connectDb");
 const getGroups = (page = 1) => {
   return new Promise((resolve, reject) => {
     const limit = 15;
-    const offset = (page - 1) * limit;
+    const offset = Math.max((page - 1) * limit, 0);
+
     const query = `
       SELECT 
         g.group_id, 
@@ -50,7 +51,8 @@ const getGroups = (page = 1) => {
 // Lấy thông tin user trong group
 const getUsersInGroup = (groupId, page = 1, limit = 15) => {
   return new Promise((resolve, reject) => {
-    const offset = (page - 1) * limit;
+    const offset = Math.max((page - 1) * limit, 0);
+
     const query = `
       SELECT u.user_id, u.username, u.phone, u.email, u.date, u.role_id
       FROM user_group ug 
@@ -88,7 +90,8 @@ const getUsersInGroup = (groupId, page = 1, limit = 15) => {
 // Lấy danh sách problem trong group
 const getProblemsInGroup = (groupId, page = 1, limit = 15) => {
   return new Promise((resolve, reject) => {
-    const offset = (page - 1) * limit;
+    const offset = Math.max((page - 1) * limit, 0);
+
     const query = `
       SELECT p.problem_id, p.title, p.difficulty, DATE_FORMAT(p.created, '%d-%m-%Y') as created
       FROM problem_group pg 
@@ -268,7 +271,8 @@ const getGroupInfo = (groupId) => {
 // Lấy danh sách người dùng và kiểm tra xem họ có trong nhóm hay không
 const getUsersWithGroupStatus = (groupId, page = 1, limit = 10, searchKeyword = '') => {
   return new Promise((resolve, reject) => {
-    const offset = (page - 1) * limit;
+    const offset = Math.max((page - 1) * limit, 0);
+
     const query = `
       SELECT 
         u.user_id, 
@@ -312,7 +316,8 @@ const getUsersWithGroupStatus = (groupId, page = 1, limit = 10, searchKeyword = 
 // Lấy danh sách bài toán và kiểm tra xem chúng có trong nhóm hay không
 const getProblemsWithGroupStatus = (groupId, page = 1, limit = 10, searchKeyword = '') => {
   return new Promise((resolve, reject) => {
-    const offset = (page - 1) * limit;
+    const offset = Math.max((page - 1) * limit, 0);
+
     const query = `
       SELECT 
         p.problem_id, 

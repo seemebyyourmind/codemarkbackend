@@ -6,7 +6,7 @@ const db = require("../../config/connectDb");
 const getSearchProblem = (page, difficulty, search) => {
   return new Promise((resolve, reject) => {
     const limit = 15;
-    const offset = (page - 1) * limit;
+    const offset = Math.max((page - 1) * limit, 0);
 
     let query = `
       SELECT 
@@ -14,14 +14,19 @@ const getSearchProblem = (page, difficulty, search) => {
       p.title, 
       p.description,
       p.difficulty,
-      DATE(p.created) as day,
-      GROUP_CONCAT(DISTINCT g.name SEPARATOR ', ') AS groups
+      p.created,
+      GROUP_CONCAT(DISTINCT g.name SEPARATOR ', ') AS groups,
+      GROUP_CONCAT(DISTINCT c.name SEPARATOR ', ') AS categories
     FROM 
      problems p
     LEFT JOIN 
       problem_group pg ON p.problem_id = pg.problem_id
     LEFT JOIN 
       groups g ON pg.group_id = g.group_id
+    LEFT JOIN 
+      problem_category pc ON p.problem_id = pc.problem_id
+    LEFT JOIN 
+      categorys c ON pc.category_id = c.category_id
     WHERE 
       1 = 1
     `;
@@ -31,6 +36,10 @@ const getSearchProblem = (page, difficulty, search) => {
       FROM problems p
       LEFT JOIN problem_group pg ON p.problem_id = pg.problem_id
       LEFT JOIN groups g ON pg.group_id = g.group_id
+     LEFT JOIN 
+      problem_category pc ON p.problem_id = pc.problem_id
+    LEFT JOIN 
+      categorys c ON pc.category_id = c.category_id
       WHERE 1 = 1
     `;
 
@@ -64,9 +73,13 @@ const getSearchProblem = (page, difficulty, search) => {
         if (countErr) {
           reject("Không thể lấy tổng số bản ghi");
         } else {
+          const totalProblems = countResults[0].total_count;
+          const totalPages = Math.ceil(totalProblems / limit);
           resolve({
             problems: results,
-            total_count: countResults[0].total_count
+            currentPage: page,
+            totalPages: totalPages,
+            totalProblems: totalProblems
           });
         }
       });
@@ -307,12 +320,13 @@ const DeleteTestCase = (testcase_id) => {
   const getSubmitsByProblemId = (problem_id, page) => {
     return new Promise((resolve, reject) => {
       const itemsPerPage = 15;
-      const offset = (page - 1) * itemsPerPage;
+      const offset = Math.max((page - 1) * limit, 0);
+
       
       const query = `
         SELECT s.submit_id, s.user_id, s.problem_id, s.language_id, s.source, 
                s.status, s.numberTestcasePass, s.numberTestcase, s.points, s.error, 
-               s.timeExecute, s.memoryUsage, u.username
+               s.timeExecute, s.memoryUsage, u.username,s.submit_date
         FROM submit s
         JOIN user u ON s.user_id = u.user_id
         WHERE s.problem_id = ?

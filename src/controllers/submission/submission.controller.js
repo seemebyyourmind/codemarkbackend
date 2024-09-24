@@ -126,7 +126,11 @@ exports.runWithStoreData = async (req, res) => {
         
         info.status ="Không có lỗi"
         
-        info.points = Math.floor((passedTestCases / totalTestCases) * 100);
+        if (passedTestCases === 0 ||totalTestCases===0) {
+          info.points = 0;
+        } else {
+          info.points = Math.floor((passedTestCases / totalTestCases) * 100);
+        }
         info.numberTestcasePass = passedTestCases;
         info.numberTestcase = totalTestCases;
         info.timeExecute = testCases.reduce((max, test) => Math.max(max, test.timeExecute || 0), 0);
@@ -218,32 +222,23 @@ exports.runCode = async (req, res) => {
   jobData.customInput = input.map(inp => inp + "\n");
 
   jobData.handleRunFinishCallback = async function (runInfo) {
-    if (runInfo.data.status === false) {
-      return res.status(500).send({ error: runInfo.data.runInfo,
-        runInfo:runInfo
-       });
-    }
+    // if (runInfo.data.status === false) {
+    //   return res.status(500).send({ 
+    //     error: runInfo.data.runInfo,
+    //     runInfo:runInfo
+    //    });
+    // }
 
     // Extract outputs from the runInfo
     // const outputs = runInfo.data.runInfo.map(test => test.stdout.trim());
     // res.status(200).send({ output: outputs });
 
 
-    const outputs = [];
-    if (Array.isArray(runInfo.data.runInfo)) {
-      runInfo.data.runInfo.forEach(test => {
-        if (test && test.stdout && typeof test.stdout === 'string') {
-          outputs.push(test.stdout.trim());
-        } else {
-          console.warn('Invalid test output:', test);
-          outputs.push('invalid test '); // Push an empty string or some default value
-        }
-      });
-    } else {
-      console.error('runInfo.data.runInfo is not an array:', runInfo.data.runInfo);
-    }
+   
   
-    res.status(200).send({ output: outputs });
+    res.status(200).send({ 
+      runInfo:runInfo
+     });
 
 
     // if (Array.isArray(runInfo.data.runInfo)) {

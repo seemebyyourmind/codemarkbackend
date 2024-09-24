@@ -34,7 +34,8 @@ const getNumberUserByGroup=(group)=>{
 const getUsersByGroup = (page,group) => {
   return new Promise((resolve, reject) => {
     const limit = 15;
-    const offset = (page - 1) * limit;
+    const offset = Math.max((page - 1) * limit, 0);
+
     db.query("SELECT u.user_id,u.username,u.email, u.phone,r.name AS role_name,g.name AS group_name FROM user u JOIN roles r ON u.role_id = r.role_id JOIN groups g ON u.group_id = g.group_id WHERE  g.name=? LIMIT ? OFFSET ? ;", [group,limit, offset], (err, results) => {
       if (err) {
         reject("fail get resource");
@@ -48,7 +49,8 @@ const getUsersByGroup = (page,group) => {
 const getUsersByRole = (page, role, search) => {
   return new Promise((resolve, reject) => {
     const limit = 15;
-    const offset = (page - 1) * limit;
+    const offset = Math.max((page - 1) * limit, 0);
+
 
     let query = `
       SELECT 
@@ -125,7 +127,8 @@ const getUsersByRole = (page, role, search) => {
 const getUsersByRole2 = (page, role, search) => {
   return new Promise((resolve, reject) => {
     const limit = 15;
-    const offset = (page - 1) * limit;
+    const offset = Math.max((page - 1) * limit, 0);
+
 
     let query = `
       SELECT 
@@ -366,7 +369,8 @@ const getUsersByRole2 = (page, role, search) => {
   const getUserSubmits = (userId, page) => {
     return new Promise((resolve, reject) => {
       const limit = 15;
-      const offset = (page - 1) * limit;
+      const offset = Math.max((page - 1) * limit, 0);
+
       
       const query = `
         SELECT user_id, problem_id, source, status, numberTestcasePass, numberTestcase, 

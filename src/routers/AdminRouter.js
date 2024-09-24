@@ -5,6 +5,8 @@ const Problem = require("../controllers/AdminControler/Problem");
 
 const Submit = require("../controllers/AdminControler/Submit");
 const Group = require("../controllers/AdminControler/Group");
+const Category = require("../controllers/AdminControler/Category");
+
 
 
 router.get("/user/getuserbyrole", User.getUserByRole);// role, page,search (query)-done 
@@ -73,6 +75,21 @@ router.delete("/group/removeproblemfromgroup", Group.removeProblemFromGroup); //
 router.get("/group/getgroupinfo", Group.getGroupInfo); // id (query)
 router.get("/group/getuserswithgroupstatus", Group.getUsersWithGroupStatus); // id, page, search (query)
 router.get("/group/getproblemswithgroupstatus", Group.getProblemsWithGroupStatus); // id, page, search (query)
+
+
+
+router.get("/category/getcategories", Category.getAllCategories); // page (query)
+// router.get("/category/getcategoryinfo", Category.getCategoryInfo); // id (query)
+router.post("/category/createcategory", Category.createCategory); // name, description (body)
+router.put("/category/updatecategory", Category.updateCategory); // category_id, name, description (body)
+router.delete("/category/deletecategory", Category.deleteCategory); // category_id (body)
+router.post("/category/addcategorytoproblem", Category.addCategoryToProblem); // problem_id, category_id (body)
+router.delete("/category/removecategoryfromproblem", Category.removeCategoryFromProblem); // problem_id, category_id (body)
+router.get("/category/getcategoryinfo", Category.getCategoryInfo); // id (query)
+
+router.get("/category/getproblemswithcategorystatus", Category.getProblemsInCategoryStatus); // id, page, search (query)
+router.get("/category/getproblemswithcategory", Category.getProblemsInCategory); // category_id  page query-------done  -----dùng cả ở user
+
 
 
 //thêm router groupdetail

@@ -353,11 +353,34 @@ async function runCodeFromUser(data) {
         console.log(runInfo);
         
         // We don't check for correctness here, just capture the output
-        runInfo.status = convertToStatus(runInfo);
-        if (runInfo.status === EXECUTE_CODE_STATUS.CAN_CHECK_ANSWER) {
-          runInfo.status = EXECUTE_CODE_STATUS.AC;  // Consider it "accepted" if it runs without errors
+        let runStatus= convertToStatus(runInfo);
+        // runInfo.status 
+        if (runStatus === EXECUTE_CODE_STATUS.CAN_CHECK_ANSWER) {
+          runStatus = EXECUTE_CODE_STATUS.AC;  // Consider it "accepted" if it runs without errors
+        }else {
+          let errorString = "";
+          switch (runStatus) {
+            case EXECUTE_CODE_STATUS.TLE:
+              errorString = "Quá thời gian";
+              break;
+            case EXECUTE_CODE_STATUS.MLE:
+              errorString = "Quá bộ nhớ";
+              break;
+            case EXECUTE_CODE_STATUS.RE:
+              errorString = "Lỗi thực thi";
+              break;
+            default:
+              errorString = "Lỗi không xác định";
+          }
+          runInfo.errorString = errorString;
+          response.data = {
+            status: false,
+            runInfo: "xảy ra lỗi: "+errorString,
+            
+          };
+          parentPort.postMessage(response);
+          return;
         }
-
         listTestInfo.push(runInfo);
         await dockerContainer.handleFinishCompile(); // restart container to check memory
       } catch (error) {

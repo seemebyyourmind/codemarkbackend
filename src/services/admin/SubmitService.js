@@ -86,7 +86,8 @@ const getSubmitById = (submit_id) => {
 // Lấy danh sách submit theo user_id và problem_id
 const getSubmitsByUserAndProblem = (user_id, problem_id, page = 1, limit = 10) => {
   return new Promise((resolve, reject) => {
-    const offset = (page - 1) * limit;
+    const offset = Math.max((page - 1) * limit, 0);
+
     const query = `
       SELECT s.*, p.title, l.name AS language_name
       FROM submit s
@@ -130,7 +131,8 @@ const getSubmitsByUserAndProblem = (user_id, problem_id, page = 1, limit = 10) =
 // Lấy danh sách submit theo user_id
 const getSubmitsByUserId = (user_id, page = 1, limit = 15) => {
   return new Promise((resolve, reject) => {
-    const offset = (page - 1) * limit;
+    const offset = Math.max((page - 1) * limit, 0);
+
     const query = `
       SELECT s.*, p.title
       FROM submit s
@@ -173,7 +175,8 @@ const getSubmitsByUserId = (user_id, page = 1, limit = 15) => {
 // Lấy danh sách submit theo problem_id
 const getSubmitsByProblemId = (problem_id, page = 1, limit = 15) => {
   return new Promise((resolve, reject) => {
-    const offset = (page - 1) * limit;
+    const offset = Math.max((page - 1) * limit, 0);
+
     const query = `
       SELECT s.*, u.username
       FROM submit s
@@ -216,7 +219,8 @@ const getSubmitsByProblemId = (problem_id, page = 1, limit = 15) => {
 // Lấy thông tin submit có phân trang
 const getSubmitsWithPagination = (page = 1, limit = 15, sortBy = 'submit_id') => {
   return new Promise((resolve, reject) => {
-    const offset = (page - 1) * limit;
+    const offset = Math.max((page - 1) * limit, 0);
+
     let orderBy = 's.submit_id DESC';
     
     if (sortBy === 'problem_id') {
@@ -230,7 +234,7 @@ const getSubmitsWithPagination = (page = 1, limit = 15, sortBy = 'submit_id') =>
         s.user_id, s.problem_id, s.source, s.status, 
         s.numberTestcasePass, s.numberTestcase, s.points, 
         s.error, s.language_id, s.timeExecute, s.memoryUsage, 
-        s.submit_id, u.username, p.title
+        s.submit_id, u.username, p.title,s.submit_date
       FROM submit s
       JOIN user u ON s.user_id = u.user_id
       JOIN problems p ON s.problem_id = p.problem_id
