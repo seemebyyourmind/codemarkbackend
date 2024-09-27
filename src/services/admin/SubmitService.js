@@ -134,9 +134,10 @@ const getSubmitsByUserId = (user_id, page = 1, limit = 15) => {
     const offset = Math.max((page - 1) * limit, 0);
 
     const query = `
-      SELECT s.*, p.title
+      SELECT s.*, p.title, l.name AS language_name
       FROM submit s
       JOIN problems p ON s.problem_id = p.problem_id
+      JOIN languages l ON s.language_id = l.language_id
       WHERE s.user_id = ?
       ORDER BY s.submit_id DESC
       LIMIT ? OFFSET ?

@@ -88,10 +88,10 @@ const getUsersInGroup = (groupId, page = 1, limit = 15) => {
 };
 
 // Lấy danh sách problem trong group
-const getProblemsInGroup = (groupId, page = 1, limit = 15) => {
+const getProblemsInGroup2= (groupId, category, page = 1, limit = 15) => {
   return new Promise((resolve, reject) => {
     const offset = Math.max((page - 1) * limit, 0);
-
+    
     const query = `
       SELECT p.problem_id, p.title, p.difficulty, DATE_FORMAT(p.created, '%d-%m-%Y') as created
       FROM problem_group pg 
@@ -99,6 +99,7 @@ const getProblemsInGroup = (groupId, page = 1, limit = 15) => {
       WHERE pg.group_id = ?
       LIMIT ? OFFSET ?
     `;
+    
     db.query(query, [groupId, limit, offset], (err, results) => {
       if (err) {
         reject("Không thể lấy danh sách bài toán trong nhóm");
@@ -123,6 +124,81 @@ const getProblemsInGroup = (groupId, page = 1, limit = 15) => {
         );
       }
     });
+  });
+};
+const getProblemsInGroup = (groupId, category, page = 1, limit = 15) => {
+  return new Promise((resolve, reject) => {
+    const offset = Math.max((page - 1) * limit, 0);
+    
+    let query = `
+    SELECT 
+    p.problem_id, 
+    p.title, 
+    p.description,
+    p.difficulty,
+    p.created,
+    GROUP_CONCAT(DISTINCT g.name SEPARATOR ', ') AS groups,
+    GROUP_CONCAT(DISTINCT c.name SEPARATOR ', ') AS categories
+  FROM 
+   problems p
+  LEFT JOIN 
+    problem_group pg ON p.problem_id = pg.problem_id
+  LEFT JOIN 
+    groups g ON pg.group_id = g.group_id
+  LEFT JOIN 
+    problem_category pc ON p.problem_id = pc.problem_id
+  LEFT JOIN 
+    categorys c ON pc.category_id = c.category_id
+  WHERE 
+    pg.group_id = ?
+  `;
+    
+  let countQuery = `
+  SELECT COUNT(DISTINCT p.problem_id) AS total_count
+  FROM problems p
+  LEFT JOIN problem_group pg ON p.problem_id = pg.problem_id
+  LEFT JOIN groups g ON pg.group_id = g.group_id
+ LEFT JOIN 
+  problem_category pc ON p.problem_id = pc.problem_id
+LEFT JOIN 
+  categorys c ON pc.category_id = c.category_id
+  WHERE 1 = 1
+`;
+
+let queryParams = [groupId];
+
+if (category !== 0) {
+  query += ` AND c.category_id = ?`;
+  countQuery += ` AND c.category_id = ?`;
+  queryParams.push(category);
+} 
+query += ` GROUP BY p.problem_id, p.title, p.description, p.difficulty, p.created LIMIT ? OFFSET ?`;
+queryParams.push(limit, offset);
+console.log(query);
+console.log(queryParams);
+ 
+db.query(query, queryParams, (err, results) => {
+  if (err) {
+    reject("Không thể truy xuất bài toán");
+    return;
+  }
+
+  // Lấy tổng số bản ghi
+  db.query(countQuery, queryParams.slice(0, -2), (countErr, countResults) => {
+    if (countErr) {
+      reject("Không thể lấy tổng số bản ghi");
+    } else {
+      const totalProblems = countResults[0].total_count;
+      const totalPages = Math.ceil(totalProblems / limit);
+      resolve({
+        problems: results,
+        currentPage: page,
+        totalPages: totalPages,
+        totalProblems: totalProblems
+      });
+    }
+  });
+});
   });
 };
 

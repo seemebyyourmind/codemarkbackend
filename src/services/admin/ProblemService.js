@@ -3,7 +3,7 @@
 const db = require("../../config/connectDb");
 
 
-const getSearchProblem = (page, difficulty, search) => {
+const getSearchProblem = (page, difficulty, search,category) => {
   return new Promise((resolve, reject) => {
     const limit = 15;
     const offset = Math.max((page - 1) * limit, 0);
@@ -48,6 +48,11 @@ const getSearchProblem = (page, difficulty, search) => {
       query += ` AND p.difficulty = ?`;
       countQuery += ` AND p.difficulty = ?`;
       queryParams.push(difficulty);
+    } 
+    if (category !== 0) {
+      query += ` AND c.category_id = ?`;
+      countQuery += ` AND c.category_id = ?`;
+      queryParams.push(category);
     } 
 
     if (search) {

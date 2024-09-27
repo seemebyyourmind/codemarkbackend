@@ -39,7 +39,8 @@ const getProblemsInGroup = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 15;
-    const result = await GroupService.getProblemsInGroup(req.query.group_id, page, limit);
+    const category = parseInt(req.query.category, 10) || 0;
+    const result = await GroupService.getProblemsInGroup(req.query.group_id,category, page, limit);
     return res.status(200).json({
       problems: result.problems,
       currentPage: result.currentPage,

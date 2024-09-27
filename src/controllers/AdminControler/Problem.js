@@ -7,11 +7,12 @@ const getSearchProblem = async (req, res) => {
       const page = parseInt(req.query.page, 10) || 1;
       const difficulty = req.query.difficulty || 'all';
       const search = req.query.search || '';
+      const category = parseInt(req.query.category, 10) || 0;
     
       
     //   const problems = await ProblemService.getSearchProblem(1,'all','h');
   
-      const problems = await ProblemService.getSearchProblem(page,difficulty,search);
+      const problems = await ProblemService.getSearchProblem(page,difficulty,search,category);
   
   
       //Tạo tài khoản
