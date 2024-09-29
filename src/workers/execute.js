@@ -163,7 +163,7 @@ async function runCodeWithSaving(data) {
     if (inps.length === 0) {
       response.data = {
         status: false,
-        runInfo: "This problem has no test, please try later"
+        runInfo: "Bài toán này chưa được cập nhập testcase"
       };
       parentPort.postMessage(response);
       return;
@@ -234,40 +234,36 @@ async function runCodeWithSaving(data) {
   
       }
     }
-
-    if (isPassAllTestCase) {
-      for (let testCase of listTestInfo) {
-        maxUsageMemory = Math.max(testCase.totalUsageMemory, maxUsageMemory);
-        maxUsageTime = Math.max(testCase.timeExecute, maxUsageTime);
-      }
-       info={status : EXECUTE_CODE_STATUS.AC,
-        numberTestcasePass : inps.length,
-        numberTestcase : inps.length,
-        timeExecute : maxUsageTime,
-        memoryUsage : maxUsageMemory,};
-      listTestInfo = [];
-      listTestInfo.push({
-        status : EXECUTE_CODE_STATUS.AC,
-        numberTestcasePass : inps.length,
-        numberTestcase : inps.length,
-        timeExecute : maxUsageTime,
-        memoryUsage : maxUsageMemory,
-      })
-    } else {
-      // Chỉ lấy ra test case bị sai
-      // listTestInfo.splice(0, listTestInfo.length - 1);
-       info={
-        numberTestcasePass :numberTestcasePass,
-        numberTestcase : inps.length,
-        hoang:"info info"}
-      // listTestInfo.push({
-      //   status : EXECUTE_CODE_STATUS.WC,
-      //   numberTestcasePass :numberTestcasePass,
-      //   numberTestcase : inps.length,
-      //   hoang:"listtest"
-        
-      // })
-    }
+    info={
+      numberTestcasePass :numberTestcasePass,
+      numberTestcase : inps.length,
+     }
+    // if (isPassAllTestCase) {
+    //   for (let testCase of listTestInfo) {
+    //     maxUsageMemory = Math.max(testCase.totalUsageMemory, maxUsageMemory);
+    //     maxUsageTime = Math.max(testCase.timeExecute, maxUsageTime);
+    //   }
+    //    info={status : EXECUTE_CODE_STATUS.AC,
+    //     numberTestcasePass : inps.length,
+    //     numberTestcase : inps.length,
+    //     timeExecute : maxUsageTime,
+    //     memoryUsage : maxUsageMemory,};
+    //   listTestInfo = [];
+    //   listTestInfo.push({
+    //     status : EXECUTE_CODE_STATUS.AC,
+    //     numberTestcasePass : inps.length,
+    //     numberTestcase : inps.length,
+    //     timeExecute : maxUsageTime,
+    //     memoryUsage : maxUsageMemory,
+    //   })
+    // } else {
+     
+    //    info={
+    //     numberTestcasePass :numberTestcasePass,
+    //     numberTestcase : inps.length,
+    //    }
+     
+    // }
 
     response.data = {
       status: true,
@@ -278,7 +274,7 @@ async function runCodeWithSaving(data) {
   } catch (error) {
     response.data = {
       status: false,
-      runInfo: error
+      runInfo: error || "Lỗi không xác định"
     };
   }
   parentPort.postMessage(response);

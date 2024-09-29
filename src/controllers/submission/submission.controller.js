@@ -57,84 +57,33 @@ exports.runWithStoreData = async (req, res) => {
         timeExecute: null,
         memoryUsage: null
       };
-      const runinfofake={
-        "type": "executing",
-        "containerId": 7175,
-        "data": {
-          "status": true,
-          "runInfo": [
-            {
-              "timeExecute": 37,
-              "totalUsageMemory": 0.953125,
-              "exitCode": 0,
-              "stdout": "57\n",
-              "output": "57\n",
-              "input": "12 45\n",
-              "status": "AC"
-            },
-            {
-              "timeExecute": 41,
-              "totalUsageMemory": 0.9375,
-              "exitCode": 0,
-              "stdout": "9\n",
-              "output": "9\n",
-              "input": "4 5\n",
-              "status": "AC"
-            },
-            {
-              "timeExecute": 41,
-              "totalUsageMemory": 0.96875,
-              "exitCode": 0,
-              "stdout": "9\n",
-              "output": "9\n",
-              "input": "4 5\n",
-              "status": "AC"
-            },
-            {
-              "timeExecute": 41,
-              "totalUsageMemory": 0.953125,
-              "exitCode": 0,
-              "stdout": "6\n",
-              "output": "6\n",
-              "input": "3 3\n",
-              "status": "AC"
-            },
-            {
-              "timeExecute": 32,
-              "totalUsageMemory": 0.96484375,
-              "exitCode": 0,
-              "stdout": "8\n",
-              "output": "6\n",
-              "input": "3 5\n",
-              "status": "WA"
-            },
-            {
-              "numberTestcasePass": 4,
-              "numberTestcase": 6
-            }
-          ]
-        }
-      }
+      
+          
+        
+      
       if (runInfo.data.status === false) {
         info.status = "Lỗi chương trình";
-        info.error = runInfo.data.runInfo;
+        info.error = runInfo.data.runInfo || "Lỗi không xác định";
         info.points = 0;
       } else {
         const testCases = runInfo.data.runInfo;
-        const totalTestCases = testCases.length - 1; // Trừ 1 vì phần tử cuối cùng là thông tin tổng hợp
-        const passedTestCases = testCases.filter(test => test.status === "AC").length;
+        const totalTestCases =runInfo.data.info.numberTestcase// Trừ 1 vì phần tử cuối cùng là thông tin tổng hợp
+        const passedTestCases = runInfo.data.info.numberTestcasePass
         
         info.status ="Không có lỗi"
         
-        if (passedTestCases === 0 ||totalTestCases===0) {
-          info.points = 0;
-        } else {
-          info.points = Math.floor((passedTestCases / totalTestCases) * 100);
-        }
+        info.points = (passedTestCases && totalTestCases)
+        ? Math.floor((passedTestCases / totalTestCases) * 100)
+        : 0;
         info.numberTestcasePass = passedTestCases;
         info.numberTestcase = totalTestCases;
-        info.timeExecute = testCases.reduce((max, test) => Math.max(max, test.timeExecute || 0), 0);
-        info.memoryUsage = testCases.reduce((max, test) => Math.max(max, test.totalUsageMemory || 0), 0);
+        info.timeExecute = testCases.reduce((max, test) => {
+          return test.timeExecute ? Math.max(max, test.timeExecute) : max;
+        }, 0);
+        
+        info.memoryUsage = testCases.reduce((max, test) => {
+          return test.totalUsageMemory ? Math.max(max, test.totalUsageMemory) : max;
+        }, 0);
       }
 
       const submitResult = await SubmitCodeService.insertSubmitResult(info);
